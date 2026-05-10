@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@theme {
+  --color-blue-primary: #007AFF;
+  --color-green-success: #34C759;
+  --color-orange-error: #FF9500;
+  --color-warm-peach: #FFF9F2;
+  --color-warm-yellow: #FFFFE5;
+
+  --color-bg-light: #ffffff;
+  --color-text-light: #1c1c1e;
+
+  --color-bg-dark: #000000;
+  --color-text-dark: #f2f2f7;
+}
+
+:root {
+  --background: var(--color-bg-light);
+  --foreground: var(--color-text-light);
+  --warm-bg: var(--color-warm-peach);
+}
+
+.dark {
+  --background: var(--color-bg-dark);
+  --foreground: var(--color-text-dark);
+  --warm-bg: #1c1c1e; /* Dark mode equivalent of warm bg */
+}
+
+@layer base {
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    @apply antialiased transition-colors duration-300;
+  }
+}
