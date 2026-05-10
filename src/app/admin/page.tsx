@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card"
-import { Button } from "@/components/ui/Button"
 import { UploadForm } from "@/components/admin/UploadForm"
-import { Users, Building, Mail, FileText } from "lucide-react"
+import { AdmissionsActions } from "@/components/admin/AdmissionsActions"
+import { Users, Building, FileText } from "lucide-react"
 
 export default function AdminDashboard() {
   return (
@@ -44,21 +44,10 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
-        {/* Top right - Admissions Actions */}
-        <Card className="col-span-1 border-0 shadow-lg">
-          <CardHeader>
-            <CardTitle>Admissions & Allocation</CardTitle>
-            <CardDescription>Manage student intake operations.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Button className="w-full justify-start h-12" variant="outline">
-              <Mail className="mr-2 h-5 w-5" /> Generate Offer Letters
-            </Button>
-            <Button className="w-full justify-start h-12" variant="outline">
-              <Building className="mr-2 h-5 w-5" /> Run Auto-Allocation Algorithm
-            </Button>
-          </CardContent>
-        </Card>
+        {/* Top right - Interactive Admissions Actions Component */}
+        <div className="col-span-1">
+          <AdmissionsActions />
+        </div>
 
         {/* Bottom row - Upload Form spanning 2 cols */}
         <div className="col-span-1 md:col-span-2">

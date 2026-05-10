@@ -5,8 +5,9 @@ import { Logo } from "@/components/ui/Logo"
 import { Button } from "@/components/ui/Button"
 import Link from "next/link"
 import { Moon, Sun } from "lucide-react"
+import { LogoutButton } from "./LogoutButton"
 
-export function Header() {
+export function Header({ isLoggedIn }: { isLoggedIn?: boolean }) {
   const [isDark, setIsDark] = React.useState(false)
 
   React.useEffect(() => {
@@ -35,11 +36,15 @@ export function Header() {
           <Button variant="ghost" size="icon" onClick={toggleDarkMode}>
             {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
-          <Link href="/login">
-            <Button variant="outline" className="rounded-full">
-              Login
-            </Button>
-          </Link>
+          {isLoggedIn ? (
+            <LogoutButton />
+          ) : (
+            <Link href="/login">
+              <Button variant="outline" className="rounded-full">
+                Login
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
     </header>
