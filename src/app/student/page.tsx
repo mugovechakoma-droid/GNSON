@@ -1,8 +1,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card"
 import { Building, GraduationCap, FileText } from "lucide-react"
 import Link from "next/link"
+import { getStudentDashData } from "@/actions/db"
 
-export default function StudentDashboard() {
+export default async function StudentDashboard() {
+  const dashData = await getStudentDashData()
+
   return (
     <div className="flex-1 container mx-auto px-4 md:px-8 py-8">
       <div className="mb-8">
@@ -22,10 +25,10 @@ export default function StudentDashboard() {
           <CardContent>
             <div className="pt-4">
               <p className="text-sm text-gray-500">Hall of Residence</p>
-              <p className="text-xl font-bold">Nightingale Wing</p>
+              <p className="text-xl font-bold">{dashData.hallOfResidence}</p>
               <div className="mt-4 border-t border-gray-100 dark:border-gray-800 pt-4">
                 <p className="text-sm text-gray-500">Room Number</p>
-                <p className="text-3xl font-black text-blue-primary">402-B</p>
+                <p className="text-3xl font-black text-blue-primary">{dashData.roomNumber}</p>
               </div>
             </div>
           </CardContent>
@@ -40,18 +43,14 @@ export default function StudentDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4 pt-4">
-              <div className="flex justify-between items-center">
-                <span className="font-medium">Anatomy Quiz 1</span>
-                <span className="text-green-success font-bold">85%</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="font-medium">Physiology Midterm</span>
-                <span className="text-green-success font-bold">92%</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="font-medium">Life Skills Essay</span>
-                <span className="font-bold">Pending</span>
-              </div>
+              {dashData.recentGrades.map((grade, idx) => (
+                <div key={idx} className="flex justify-between items-center">
+                  <span className="font-medium">{grade.subject}</span>
+                  <span className={grade.status === 'completed' ? "text-green-success font-bold" : "font-bold"}>
+                    {grade.score}
+                  </span>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>

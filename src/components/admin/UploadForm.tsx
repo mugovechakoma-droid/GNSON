@@ -5,23 +5,33 @@ import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card"
 import { UploadCloud, CheckCircle2 } from "lucide-react"
+import { uploadMaterial } from "@/actions/storage"
 
 export function UploadForm() {
   const [isUploading, setIsUploading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [error, setError] = useState("")
 
-  const handleUpload = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsUploading(true)
     setSuccess(false)
+    setError("")
 
-    // Mock upload to Firebase Cloud Storage
-    setTimeout(() => {
-      setIsUploading(false)
+    const formData = new FormData(e.currentTarget)
+
+    // Call the backend Server Action
+    const result = await uploadMaterial(formData)
+
+    setIsUploading(false)
+
+    if (result.success) {
       setSuccess(true)
-      // Reset after 3 seconds
+      e.currentTarget.reset()
       setTimeout(() => setSuccess(false), 3000)
-    }, 2000)
+    } else {
+      setError(result.error || "Upload failed")
+    }
   }
 
   return (
@@ -67,6 +77,8 @@ export function UploadForm() {
             <label className="text-sm font-medium">Select File</label>
             <Input type="file" name="file" required className="pt-3" />
           </div>
+
+          {error && <p className="text-sm text-orange-error font-medium">{error}</p>}
 
           <Button type="submit" className="w-full mt-4" disabled={isUploading}>
             {isUploading ? (

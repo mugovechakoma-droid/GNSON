@@ -1,14 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
 import { DownloadCloud, Archive } from "lucide-react"
+import { getPastPapers } from "@/actions/db"
 
-export default function PastPapersPage() {
-  const mockPapers = [
-    { year: "2023", block: "Y1B1", subject: "Anatomy & Physiology", size: "1.2 MB" },
-    { year: "2023", block: "Y2B1", subject: "Paediatrics", size: "3.4 MB" },
-    { year: "2022", block: "Y1B1", subject: "Life Skills", size: "800 KB" },
-    { year: "2022", block: "Y3B1", subject: "Nursing Management", size: "2.1 MB" },
-  ]
+export default async function PastPapersPage() {
+  const papers = await getPastPapers()
 
   return (
     <div className="flex-1 bg-warm-bg">
@@ -29,7 +25,7 @@ export default function PastPapersPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {mockPapers.map((paper, idx) => (
+                {papers.map((paper, idx) => (
                   <div key={idx} className="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800">
                     <div className="flex items-center space-x-4">
                       <div className="h-10 w-10 bg-green-100 dark:bg-green-900/30 text-green-success rounded-lg flex items-center justify-center font-bold">

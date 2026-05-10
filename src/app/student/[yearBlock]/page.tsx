@@ -1,20 +1,14 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
 import { DownloadCloud, BookOpen } from "lucide-react"
-
-// Mock data mapping blocks to modules
-const blockModules: Record<string, string[]> = {
-  y1b1: ["Anatomy & Physiology", "Nursing Science and Arts", "Life Skills", "First Aid", "Biochemistry", "Biophysics"],
-  y1b2: ["Basic and Plastic Surgery", "Pharmacology", "Infection Prevention and Control", "Epidemiology", "HIV/AIDS"],
-  y2b1: ["Child Health II/Paediatrics", "Gastrointestinal", "Cardiovascular", "Urology", "Respiratory"],
-  y2b2: ["Neurology", "Orthopaedics", "Mental Health and Psychiatric Nursing", "Ophthalmology"],
-  y3b1: ["Geriatrics", "Dermatology", "Nursing Management", "Entrepreneurship"]
-}
+import { getModuleMaterials } from "@/actions/db"
 
 export default async function CurriculumPage({ params }: { params: Promise<{ yearBlock: string }> }) {
   const resolvedParams = await params;
   const block = resolvedParams.yearBlock.toLowerCase();
-  const modules = blockModules[block] || ["Module not found"];
+
+  // Fetch from Backend Server Action
+  const modules = await getModuleMaterials(block)
 
   return (
     <div className="flex-1 bg-warm-bg">
@@ -31,42 +25,28 @@ export default async function CurriculumPage({ params }: { params: Promise<{ yea
               <CardHeader className="pb-4">
                 <div className="flex items-center space-x-3">
                   <BookOpen className="h-6 w-6 text-blue-primary" />
-                  <CardTitle>{mod}</CardTitle>
+                  <CardTitle>{mod.title}</CardTitle>
                 </div>
                 <CardDescription>Required reading and supplementary notes.</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {/* Mock Files for this module */}
-                  <div className="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-900">
-                    <div className="flex items-center space-x-4">
-                      <div className="h-10 w-10 bg-blue-100 dark:bg-blue-900/30 text-blue-primary rounded-lg flex items-center justify-center font-bold">
-                        PDF
+                  {mod.materials.map((file, fIdx) => (
+                    <div key={fIdx} className="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-900">
+                      <div className="flex items-center space-x-4">
+                        <div className={`h-10 w-10 ${file.type === 'PDF' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-primary' : 'bg-orange-100 dark:bg-orange-900/30 text-orange-error'} rounded-lg flex items-center justify-center font-bold`}>
+                          {file.type}
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">{file.title}</p>
+                          <p className="text-xs text-gray-500">{file.category} • {file.size}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-sm">Unit 1: Introduction to {mod}</p>
-                        <p className="text-xs text-gray-500">Lecture Material • 2.4 MB</p>
-                      </div>
+                      <Button variant="ghost" size="icon" className="rounded-full">
+                        <DownloadCloud className="h-5 w-5 text-gray-500" />
+                      </Button>
                     </div>
-                    <Button variant="ghost" size="icon" className="rounded-full">
-                      <DownloadCloud className="h-5 w-5 text-gray-500" />
-                    </Button>
-                  </div>
-
-                  <div className="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-900">
-                    <div className="flex items-center space-x-4">
-                      <div className="h-10 w-10 bg-orange-100 dark:bg-orange-900/30 text-orange-error rounded-lg flex items-center justify-center font-bold">
-                        PPT
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">Class Slides: {mod}</p>
-                        <p className="text-xs text-gray-500">Notes • 5.1 MB</p>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="icon" className="rounded-full">
-                      <DownloadCloud className="h-5 w-5 text-gray-500" />
-                    </Button>
-                  </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
