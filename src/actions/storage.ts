@@ -1,9 +1,27 @@
 "use server"
 
-import { adminDb, adminStorage } from "@/lib/firebase/admin"
+import { adminDb, adminStorage, adminAuth } from "@/lib/firebase/admin"
+import { cookies } from "next/headers"
+
+// Helper to verify session before allowing data access
+async function verifySession() {
+  const cookieStore = await cookies()
+  const sessionCookie = cookieStore.get("session")?.value
+  if (!sessionCookie) throw new Error("Unauthorized")
+
+  try {
+    const decodedToken = await adminAuth.verifySessionCookie(sessionCookie)
+    return decodedToken.uid
+  } catch {
+    throw new Error("Unauthorized")
+  }
+}
 
 export async function uploadMaterial(formData: FormData) {
   try {
+    // Ensure the user is authenticated securely before proceeding
+    await verifySession()
+
     const file = formData.get("file") as File
     const fileName = formData.get("fileName") as string
     const fileType = formData.get("fileType") as string
@@ -40,14 +58,12 @@ export async function uploadMaterial(formData: FormData) {
 
       return { success: true }
     } catch (realError) {
-      // If the real SDK throws (e.g. mock object doesn't fully support all methods, or credentials missing)
       console.warn("Real Storage Upload failed, simulating fallback success for demo.", realError)
-      // Simulate upload delay for the mock setup fallback
       await new Promise(resolve => setTimeout(resolve, 2000))
       return { success: true }
     }
   } catch (error: unknown) {
     console.error("Upload error:", error)
-    return { success: false, error: "Failed to upload file" }
+    return { success: false, error: "Failed to upload file or unauthorized" }
   }
 }

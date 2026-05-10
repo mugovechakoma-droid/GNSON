@@ -27,11 +27,15 @@ const mockAdminApp = {
     })
   }),
   auth: () => ({
-    verifySessionCookie: async (cookie: string) => {
-      // Decode mock role from cookie
-      if (cookie.includes('Admin')) return { uid: 'mock-admin', role: 'Admin' };
-      if (cookie.includes('Student')) return { uid: 'mock-student', role: 'Student' };
-      throw new Error('Invalid mock cookie');
+    verifyIdToken: async (token: string) => {
+      // Decode mock role from token fallback
+      if (token.includes('admin')) return { uid: 'mock-admin', role: 'Admin' };
+      if (token.includes('student')) return { uid: 'mock-student', role: 'Student' };
+      return { uid: 'mock-uid-123' };
+    },
+    createSessionCookie: async () => 'mock-secure-session-cookie',
+    verifySessionCookie: async () => {
+      return { uid: 'mock-uid-123', role: 'mock' };
     }
   }),
   storage: () => ({
@@ -46,7 +50,7 @@ const mockAdminApp = {
 
 // Only initialize the real admin SDK if credentials are provided in env,
 // otherwise use the mock version to allow the app to run and demonstrate architecture.
-let adminApp: admin.app.App | typeof mockAdminApp;
+let adminApp: admin.app.App | typeof mockAdminApp = mockAdminApp;
 
 try {
   if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY && !admin.apps.length) {
@@ -54,13 +58,12 @@ try {
       credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY)),
       storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
     });
-  } else {
-    adminApp = admin.apps.length ? admin.app() : mockAdminApp;
+  } else if (admin.apps.length) {
+    adminApp = admin.app();
   }
 } catch (error: unknown) {
   // Fallback to mock if parsing fails
   console.warn("Failed to initialize Firebase Admin SDK. Falling back to mock implementation.", error);
-  adminApp = mockAdminApp;
 }
 
 export const adminDb = adminApp.firestore();

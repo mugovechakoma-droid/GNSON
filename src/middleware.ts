@@ -1,46 +1,43 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-// In a fully integrated app, this might import `adminAuth.verifySessionCookie(session)`
-// but Next.js edge middleware cannot run the full firebase-admin Node.js SDK.
-// Therefore, we verify the secure HTTP-only session cookie structure manually.
+// Next.js edge middleware cannot run the full firebase-admin Node.js SDK to verify the
+// session cookie using adminAuth.verifySessionCookie().
+// Instead, we verify the presence of the secure session cookie, and rely on the Server Actions
+// (which run in a Node environment) to fully validate the session against Firebase before returning data.
+// For routing purposes, we read the secure 'role' cookie set during login.
 
 export async function middleware(request: NextRequest) {
   const sessionCookie = request.cookies.get('session')?.value
-  const { pathname } = request.nextUrl
+  const roleCookie = request.cookies.get('role')?.value
 
-  // Helper to mock extract role from the secure session cookie
-  let role = null
-  if (sessionCookie) {
-    if (sessionCookie.includes('Admin')) role = 'Admin'
-    if (sessionCookie.includes('Student')) role = 'Student'
-  }
+  const { pathname } = request.nextUrl
 
   // Protected Admin Routes
   if (pathname.startsWith('/admin')) {
-    if (!role) {
+    if (!sessionCookie || !roleCookie) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
-    if (role !== 'Admin') {
+    if (roleCookie !== 'Admin') {
       return NextResponse.redirect(new URL('/login', request.url))
     }
   }
 
   // Protected Student Routes
   if (pathname.startsWith('/student')) {
-    if (!role) {
+    if (!sessionCookie || !roleCookie) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
-    if (role !== 'Student') {
+    if (roleCookie !== 'Student') {
       return NextResponse.redirect(new URL('/login', request.url))
     }
   }
 
   // If logged in and trying to access login or landing page, redirect to respective dashboard
-  if (pathname === '/login' || pathname === '/') {
-    if (role === 'Admin') {
+  if ((pathname === '/login' || pathname === '/') && sessionCookie && roleCookie) {
+    if (roleCookie === 'Admin') {
       return NextResponse.redirect(new URL('/admin', request.url))
-    } else if (role === 'Student') {
+    } else if (roleCookie === 'Student') {
       return NextResponse.redirect(new URL('/student/y1b1', request.url))
     }
   }

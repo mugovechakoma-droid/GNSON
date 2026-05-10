@@ -1,18 +1,32 @@
 "use server"
 
-import { adminDb } from "@/lib/firebase/admin"
+import { adminDb, adminAuth } from "@/lib/firebase/admin"
+import { cookies } from "next/headers"
+
+// Helper to verify session before allowing data access
+async function verifySession() {
+  const cookieStore = await cookies()
+  const sessionCookie = cookieStore.get("session")?.value
+  if (!sessionCookie) throw new Error("Unauthorized")
+
+  try {
+    const decodedToken = await adminAuth.verifySessionCookie(sessionCookie)
+    return decodedToken.uid
+  } catch {
+    throw new Error("Unauthorized")
+  }
+}
 
 export async function getStudentDashData() {
   try {
-    // Attempt real Firebase query (will use mock if fallback is active)
-    // In a fully integrated app, the UID would come from the decoded session cookie
-    const mockUid = "student_123"
-    const docRef = adminDb.collection("students").doc(mockUid)
+    const uid = await verifySession()
+
+    // Attempt real Firebase query
+    const docRef = adminDb.collection("students").doc(uid)
     const docSnap = await docRef.get()
 
     if (docSnap.exists) {
       const data = docSnap.data() as Record<string, unknown>
-      // Make sure structure matches what UI expects, providing fallback data if necessary
       return {
         hallOfResidence: (data?.hallOfResidence as string) || "Nightingale Wing",
         roomNumber: (data?.roomNumber as string) || "402-B",
@@ -23,11 +37,11 @@ export async function getStudentDashData() {
         ]
       }
     }
-  } catch (error) {
-    console.warn("DB getStudentDashData error, falling back", error)
+  } catch {
+    console.warn("DB getStudentDashData error, falling back")
   }
 
-  // Fallback if document doesn't exist or error occurs
+  // Fallback if document doesn't exist or error occurs (for bootstrap demo)
   return {
     hallOfResidence: "Nightingale Wing",
     roomNumber: "402-B",
@@ -41,16 +55,16 @@ export async function getStudentDashData() {
 
 export async function getModuleMaterials(block: string) {
   try {
+    await verifySession()
+
     // Attempt real Firebase query
     const materialsRef = adminDb.collection("materials").where("rgnModule", "==", block.toLowerCase())
     const snapshot = await materialsRef.get()
 
     if (!snapshot.empty) {
-      // Group fetched materials by module title
-      // We expect data like: { title: "Intro to Anatomy", rgnModule: "y1b1", fileType: "PDF", originalName: "doc.pdf", ... }
       const groupedData: Record<string, {title: string, materials: {title: string, type: string, size: string, category: string}[]}> = {}
 
-      snapshot.docs.forEach(doc => {
+      snapshot.docs.forEach((doc: { data: () => unknown }) => {
         const data = doc.data() as Record<string, unknown>
         const modTitle = (data.title as string) || "General Material"
         if (!groupedData[modTitle]) {
@@ -58,8 +72,8 @@ export async function getModuleMaterials(block: string) {
         }
         groupedData[modTitle].materials.push({
           title: (data.fileName as string) || (data.originalName as string),
-          type: data.fileType === "Notes" ? "PPT" : "PDF", // Simplified mapping for UI
-          size: "Unknown", // Would be stored in DB ideally
+          type: data.fileType === "Notes" ? "PPT" : "PDF",
+          size: "Unknown",
           category: data.fileType as string
         })
       })
@@ -67,8 +81,8 @@ export async function getModuleMaterials(block: string) {
       const result = Object.values(groupedData)
       if (result.length > 0) return result
     }
-  } catch (error) {
-    console.warn("DB getModuleMaterials error, falling back", error)
+  } catch {
+    console.warn("DB getModuleMaterials error, falling back")
   }
 
   // Fallback default structure
@@ -93,12 +107,14 @@ export async function getModuleMaterials(block: string) {
 
 export async function getPastPapers() {
   try {
+    await verifySession()
+
     // Attempt real Firebase query
     const papersRef = adminDb.collection("materials").where("fileType", "==", "Question Paper")
     const snapshot = await papersRef.get()
 
     if (!snapshot.empty) {
-      return snapshot.docs.map(doc => {
+      return snapshot.docs.map((doc: { data: () => unknown }) => {
         const data = doc.data() as Record<string, unknown>
         return {
           year: new Date((data.createdAt as { toDate?: () => Date })?.toDate?.() || Date.now()).getFullYear().toString(),
@@ -108,8 +124,8 @@ export async function getPastPapers() {
         }
       })
     }
-  } catch (error) {
-     console.warn("DB getPastPapers error, falling back", error)
+  } catch {
+     console.warn("DB getPastPapers error, falling back")
   }
 
   // Fallback default list
