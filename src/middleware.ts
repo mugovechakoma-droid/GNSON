@@ -10,35 +10,37 @@ import type { NextRequest } from 'next/server'
 export async function middleware(request: NextRequest) {
   const sessionCookie = request.cookies.get('session')?.value
   const roleCookie = request.cookies.get('role')?.value
+  const studentRouteCookie = request.cookies.get('student_route')?.value
 
   const { pathname } = request.nextUrl
 
   // Protected Admin Routes
   if (pathname.startsWith('/admin')) {
     if (!sessionCookie || !roleCookie) {
-      return NextResponse.redirect(new URL('/login', request.url))
+      return NextResponse.redirect(new URL('/', request.url)) // Redirect to Z-pattern landing page login
     }
     if (roleCookie !== 'Admin') {
-      return NextResponse.redirect(new URL('/login', request.url))
+      return NextResponse.redirect(new URL('/', request.url))
     }
   }
 
   // Protected Student Routes
   if (pathname.startsWith('/student')) {
     if (!sessionCookie || !roleCookie) {
-      return NextResponse.redirect(new URL('/login', request.url))
+      return NextResponse.redirect(new URL('/', request.url))
     }
     if (roleCookie !== 'Student') {
-      return NextResponse.redirect(new URL('/login', request.url))
+      return NextResponse.redirect(new URL('/', request.url))
     }
   }
 
-  // If logged in and trying to access login or landing page, redirect to respective dashboard
-  if ((pathname === '/login' || pathname === '/') && sessionCookie && roleCookie) {
+  // If logged in and trying to access the landing page (which now houses the login), redirect to respective dashboard
+  if ((pathname === '/' || pathname === '/login') && sessionCookie && roleCookie) {
     if (roleCookie === 'Admin') {
       return NextResponse.redirect(new URL('/admin', request.url))
     } else if (roleCookie === 'Student') {
-      return NextResponse.redirect(new URL('/student/y1b1', request.url))
+      const targetRoute = studentRouteCookie || '/student/y1b1' // Smart redirect utilizing data from DB fetched at login
+      return NextResponse.redirect(new URL(targetRoute, request.url))
     }
   }
 
