@@ -1,0 +1,14 @@
+
+> hub@0.1.0 dev
+> next dev
+
+  ▲ Next.js 15.0.0-rc.0
+  - Local:        http://localhost:3000
+
+ ✓ Starting...
+ ✓ Ready in 2.1s
+ ○ Compiling /src/middleware ...
+ ✓ Compiled /src/middleware in 1840ms (206 modules)
+ ○ Compiling /unauthorized ...
+ ✓ Compiled /unauthorized in 6.3s (641 modules)
+ GET /unauthorized 200 in 6971ms
